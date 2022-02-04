@@ -110,13 +110,14 @@ class MotionSimulation:
 
         for t in range(1, n_pts - 1):
 
-            while True:
+            theta[t] = self.get_next_direction(theta[t - 1])
+            x[t + 1], y[t + 1] = self.update_position(x[t], y[t], theta[t])
 
-                theta[t] = self.get_next_direction(theta[t - 1])
+            # If animal collides with wall, reflect angle
+            if not self.boundary.contains(x[t + 1], y[t + 1]):
+                theta[t] = np.mod(theta[t] + np.pi, 2 * np.pi)
                 x[t + 1], y[t + 1] = self.update_position(x[t], y[t], theta[t])
-
-                if self.boundary.contains(x[t + 1], y[t + 1]):
-                    break
+                    
 
         return x, y, theta
 
