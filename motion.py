@@ -48,13 +48,28 @@ class RectangleBoundary:
 
 class MotionSimulation:
 
-    def __init__(self):
+    def __init__(self, boundary='rectangle', time_step=0.01, std=1.0, speed=1.0, rng=None):
 
-        self.rng = np.random.default_rng()
-        self.boundary = RectangleBoundary(0.0, 0.0, 2.0, 2.0)
-        self.time_step = 0.01
-        self.std = 1.0
-        self.speed = 1.0
+        # Boundary for spatial environment
+        if boundary == 'rectangle':
+            self.boundary = RectangleBoundary(0.0, 0.0, 2.0, 2.0)
+        else:
+            raise ValueError(f'Boundary "{boundary}" not supported.')
+            
+        # Time step for Brownian motion
+        self.time_step = time_step
+        
+        # Standard deviation of Brownian motion
+        self.std = std
+        
+        # Speed of animal (constant throughout trial)
+        self.speed = speed
+        
+        # Random number generator
+        if rng is None:
+            self.rng = np.random.default_rng()
+        else:
+            self.rng = rng
 
     def get_init_direction(self):
 
@@ -100,7 +115,7 @@ class MotionSimulation:
                 theta[t] = self.get_next_direction(theta[t - 1])
                 x[t + 1], y[t + 1] = self.update_position(x[t], y[t], theta[t])
 
-                if self.boundary.contains(x[t], y[t]):
+                if self.boundary.contains(x[t + 1], y[t + 1]):
                     break
 
         return x, y, theta
