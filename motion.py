@@ -48,22 +48,22 @@ class RectangleBoundary:
 
 class MotionSimulation:
 
-    def __init__(self, boundary='rectangle', time_step=0.01, std=1.0, speed=1.0, rng=None):
+    def __init__(self, boundary='square', time_step=0.01, std_norm=1.0, rng=None):
 
         # Boundary for spatial environment
-        if boundary == 'rectangle':
+        if boundary == 'square':
             self.boundary = RectangleBoundary(0.0, 0.0, 2.0, 2.0)
         else:
             raise ValueError(f'Boundary "{boundary}" not supported.')
             
-        # Time step for Brownian motion
+        # Compute Brownian motion stddev from time step and normalized stddev
         self.time_step = time_step
+        self.std_norm = std_norm
+        self.std_brownian = np.sqrt(time_step) * std_norm
         
-        # Standard deviation of Brownian motion
-        self.std = std
-        
-        # Speed of animal (constant throughout trial)
-        self.speed = speed
+        # Speed distribution of animal
+        self.speed_vals = np.array([0.0, 0.1, 0.2, 0.3, 0.4])
+        self.p_speed = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
         
         # Random number generator
         if rng is None:
@@ -71,63 +71,90 @@ class MotionSimulation:
         else:
             self.rng = rng
 
-    def get_init_direction(self):
+    def smp_speed(self):
+        return self.rng.choice(self.speed_vals, p=self.p_speed)
 
+    def smp_init_direction(self):
         return self.rng.random() * 2 * np.pi
 
-    def get_next_direction(self, theta_prev):
+    def smp_direction_step(self):
+        return self.std_brownian * self.rng.standard_normal()
 
-        # Standard deviation of Brownian motion step
-        std_brownian = np.sqrt(self.time_step) * self.std
+    def smp_direction_collision(self):
+        return self.rng.random() * 2 * np.pi
 
-        # Take Brownian motion step to get new direction (non-normalized)
-        theta_nn = theta_prev + std_brownian * self.rng.standard_normal()
+    def get_xstep(self, speed, theta):
+        return speed * self.time_step * np.cos(theta)
 
-        # Make sure angle is between 0 and 2 * pi
-        return np.mod(theta_nn, 2 * np.pi)
+    def get_ystep(self, speed, theta):
+        return speed * self.time_step * np.sin(theta)
 
-    def update_position(self, x, y, theta):
-        
-        x_next = x + self.speed * self.time_step * np.cos(theta)
-        y_next = y + self.speed * self.time_step * np.sin(theta)
+    def sample_trial(self, n_steps):
 
-        return x_next, y_next
+        # Position (cartesian coordinates)
+        pos_x = np.full(n_steps, np.nan)
+        pos_y = np.full(n_steps, np.nan)
 
+        # Velocity (polar coordinates)
+        speed = np.full(n_steps, np.nan)
+        theta = np.full(n_steps, np.nan)
 
-    def sample_trial(self, n_pts):
+        # Initialize velocity
+        speed[0] = self.smp_speed()
+        theta[0] = self.smp_init_direction()
 
-        x = np.full(n_pts, np.nan)
-        y = np.full(n_pts, np.nan)
-        theta = np.full(n_pts, np.nan)
+        # Initalize position
+        pos_x[0] = self.get_xstep(speed[0], theta[0])
+        pos_y[0] = self.get_ystep(speed[0], theta[0])
 
-        x[0] = 0.0
-        y[0] = 0.0
-        theta[0] = self.get_init_direction()
-
-        x[1], y[1] = self.update_position(x[0], y[0], theta[0])
-        if not self.boundary.contains(x[1], y[1]):
+        # Check boundary condition
+        if not self.boundary.contains(pos_x[0], pos_y[0]):
             raise ValueError('First step is outside boundary')
 
-        for t in range(1, n_pts - 1):
+        for t in range(1, n_steps):
 
-            theta[t] = self.get_next_direction(theta[t - 1])
-            x[t + 1], y[t + 1] = self.update_position(x[t], y[t], theta[t])
+            # Update velocity
+            speed[t] = self.smp_speed()
+            theta[t] = theta[t - 1] + self.smp_direction_step()
 
-            # If animal collides with wall, reflect angle
-            if not self.boundary.contains(x[t + 1], y[t + 1]):
-                theta[t] = np.mod(theta[t] + np.pi, 2 * np.pi)
-                x[t + 1], y[t + 1] = self.update_position(x[t], y[t], theta[t])
-                    
+            # Update position
+            pos_x[t] = pos_x[t - 1] + self.get_xstep(speed[t], theta[t])
+            pos_y[t] = pos_y[t - 1] + self.get_ystep(speed[t], theta[t])
+ 
+            # If animal collides with wall, sample angle from uniform distribution
+            while not self.boundary.contains(pos_x[t], pos_y[t]):
 
-        return x, y, theta
+                # Resample direciton
+                theta[t] = self.smp_direction_collision()
 
-    def plot_position(self, x, y, ax=None):
+                # Update position
+                pos_x[t] = pos_x[t - 1] + self.get_xstep(speed[t], theta[t])
+                pos_y[t] = pos_y[t - 1] + self.get_ystep(speed[t], theta[t])
+
+
+        # Normalize direction so that it lies in [0, 2pi]
+        theta_norm = np.mod(theta, 2 * np.pi)
+
+        pos = np.stack((pos_x, pos_y), axis=-1)
+        vel = np.stack((speed, theta_norm), axis=-1)
+
+        return pos, vel
+
+    def plot_position(self, pos, ax=None):
 
         if ax is None:
             ax = plt.gca()
 
+        # Add origin point to beginning of position sequence
+        pos_x = np.concatenate(([0.0], pos[:, 0]))
+        pos_y = np.concatenate(([0.0], pos[:, 1]))
+
+        # Make sure x- and y-scales are the same
+        ax.set_aspect('equal')
+
+        # Plot boundary and position values
         self.boundary.plot(ax)
-        ax.plot(x, y)
+        ax.plot(pos_x, pos_y)
 
     def plot_direction(self, theta, ax=None):
 
