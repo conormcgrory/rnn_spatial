@@ -140,25 +140,57 @@ class MotionSimulation:
 
         return pos, vel
 
-    def plot_position(self, pos, ax=None):
+    def sample_batch(self, n_steps, n_trials):
 
-        if ax is None:
-            ax = plt.gca()
+        pos = np.full((n_trials, n_steps, 2), np.nan)
+        vel = np.full((n_trials, n_steps, 2), np.nan)
 
-        # Add origin point to beginning of position sequence
-        pos_x = np.concatenate(([0.0], pos[:, 0]))
-        pos_y = np.concatenate(([0.0], pos[:, 1]))
+        for t in range(n_trials):
+            p, v = self.sample_trial(n_steps)
+            pos[t] = p
+            vel[t] = v
 
-        # Make sure x- and y-scales are the same
-        ax.set_aspect('equal')
+        return pos, vel
 
-        # Plot boundary and position values
-        self.boundary.plot(ax)
-        ax.plot(pos_x, pos_y)
+def plot_position(pos, boundary, ax=None):
 
-    def plot_direction(self, theta, ax=None):
+    if ax is None:
+        ax = plt.gca()
 
-        if ax is None:
-            ax = plt.gca()
+    # Add origin point to beginning of position sequence
+    pos_x = np.concatenate(([0.0], pos[:, 0]))
+    pos_y = np.concatenate(([0.0], pos[:, 1]))
 
-        ax.plot(theta)
+    # Make sure x- and y-scales are the same
+    ax.set_aspect('equal')
+
+    # Plot boundary and position values
+    boundary.plot(ax)
+    ax.plot(pos_x, pos_y)
+
+def plot_position_est(pos_true, pos_est, boundary, ax=None):
+
+    if ax is None:
+        ax = plt.gca()
+
+    # Add origin point to beginning of position sequences
+    x_true = np.concatenate(([0.0], pos_true[:, 0]))
+    y_true = np.concatenate(([0.0], pos_true[:, 1]))
+    x_est = np.concatenate(([0.0], pos_est[:, 0]))
+    y_est = np.concatenate(([0.0], pos_est[:, 1]))
+
+    # Make sure x- and y-scales are the same
+    ax.set_aspect('equal')
+
+    # Plot boundary and position values
+    boundary.plot(ax)
+    ax.plot(x_true, y_true)
+    ax.plot(x_est, y_est)
+
+# TODO: Add simulation parameters to file
+def save_batch(pos, vel, fpath):
+    np.savez(fpath, pos=pos, vel=vel)
+
+def load_batch(fpath):
+    with np.load(fpath) as data:
+        return data['pos'], data['vel']
