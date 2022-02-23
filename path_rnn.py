@@ -1,72 +1,29 @@
 """RNN for path integration"""
 
 import numpy as np
+import torch
 
+class PathRNN(torch.nn.Module):
+    
+    def __init__(self, n_units):
 
-N_INPUTS = 2
-N_UNITS = 100
-N_OUTPUTS = 2
+        super(PathRNN, self).__init__()
 
+        self.n_units = n_units
 
-class RNNParams:
+        # RNN Layer
+        self.rnn = torch.nn.RNN(input_size=2, hidden_size=n_units, num_layers=1, nonlinearity='tanh', batch_first=True)
 
-    def __init__(self, w_in, w_rec, w_out, b):
-
-        self.w_in = w_in
-        self.w_rec = w_rec
-        self.w_out = w_out
-        self.b = b
-
-    @classmethod
-    def from_vec(cls, vec):
-        pass
-
-    def to_vec(self):
-        pass
-
-def get_init_params(rng):
-
-    w_in = rng.normal(0, np.sqrt(1 / N_INPUTS), (N_UNITS, N_INPUTS))
-    w_out = np.zeros((N_OUTPUTS, N_UNITS))
-    b = np.zeros(N_UNITS)
-
-    # TODO: Change this to orthogonal initialization from Saxe et al., 2014
-    w_rec = rng.normal(0, np.sqrt(1 / N_UNITS), (N_UNITS, N_UNITS))
-
-    return RNNParams(w_in, w_rec, w_out, b)
-
-def run_batch(vel, params):
-
-    n_pts = vel.shape[0]
-
-    # Unit inputs
-    x = np.full((n_pts, N_UNITS), np.nan)
-
-    # Unit activity values
-    u = np.full((n_pts, N_UNITS), np.nan)
-
-    # Output values
-    y = np.full((n_pts, 2), np.nan)
-
-    # Initialize units to zero
-    u[-1] = np.zeros(N_UNITS)
-
-    for t in range(n_pts):
-
-        # Update unit inputs
-        x[t] = params.w_in @ vel[t] + params.w_rec @ u[t - 1]
-
-        # Update unit activities
-        u[t] = np.tanh(x[t])
-
-        # Update outputs
-        y[t] = params.w_out @ u[t]
-
-    return y
-
-def compute_batch_error(vel, pos, params):
-
-    pos_est = run_batch(vel, params)
-    sq_err = np.sum((pos_est - pos) ** 2, axis=1)
-
-    return np.mean(sq_err)
+        # Output layer
+        self.output = torch.nn.Linear(n_units, 2)
+    
+    def forward(self, vel):
+        
+        # Run RNN on velocity sequences to get hidden unit values
+        u_vals, _ = self.rnn(vel)
+        
+        # Apply output weights to get estimated position
+        pos_est = self.output(u_vals)
+        
+        return pos_est, u_vals
+    
