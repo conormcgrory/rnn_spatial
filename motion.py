@@ -182,25 +182,26 @@ class MotionSimulation:
         ax.plot(pos_x, pos_y)
 
 
-#def plot_position_est(pos_true, pos_est, boundary, ax=None):
-#
-#    if ax is None:
-#        ax = plt.gca()
-#
-#    # Add origin point to beginning of position sequences
-#    x_true = np.concatenate(([0.0], pos_true[:, 0]))
-#    y_true = np.concatenate(([0.0], pos_true[:, 1]))
-#    x_est = np.concatenate(([0.0], pos_est[:, 0]))
-#    y_est = np.concatenate(([0.0], pos_est[:, 1]))
-#
-#    # Make sure x- and y-scales are the same
-#    ax.set_aspect('equal')
-#
-#    # Plot boundary and position values
-#    boundary.plot(ax)
-#    ax.plot(x_true, y_true)
-#    ax.plot(x_est, y_est)
-#
+def plot_position_estimate(boundary, pos_true, pos_est, ax=None):
+
+    if ax is None:
+        ax = plt.gca()
+
+    # Plot boundary
+    boundary.plot(ax)
+
+    # Add origin point to beginning of position sequences
+    x_true = np.concatenate(([0.0], pos_true[:, 0]))
+    y_true = np.concatenate(([0.0], pos_true[:, 1]))
+    x_est = np.concatenate(([0.0], pos_est[:, 0]))
+    y_est = np.concatenate(([0.0], pos_est[:, 1]))
+
+    # Plot position sequences
+    ax.plot(x_true, y_true, color='black', label='true')
+    ax.plot(x_est, y_est, color='red', label='est')
+
+    ax.set_aspect('equal')
+    ax.legend()
 
 def save_simulation(sim, fpath):
     """Save MotionSimulation object to file."""
