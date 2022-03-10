@@ -4,6 +4,8 @@ import abc
 
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
+from torch.utils.data import Dataset
 
 
 class Boundary(abc.ABC):
@@ -45,6 +47,21 @@ class SquareBoundary:
             self.y_min, self.y_min, self.y_max, self.y_max, self.y_min])
 
         ax.plot(x_vals, y_vals, '--')
+
+
+class MotionDataset(Dataset):
+
+    def __init__(self, vel, pos):
+
+        self.vel = torch.Tensor(vel)
+        self.pos = torch.Tensor(pos)
+        self.num_trials = vel.shape[0]
+
+    def __getitem__(self, index):
+        return self.vel[index], self.pos[index]
+ 
+    def __len__(self):
+        return self.num_trials
 
 
 class MotionSimulation:
@@ -162,6 +179,9 @@ class MotionSimulation:
 
         for k in range(self.n_trials):
             self.vel[k], self.pos[k] = self._smp_trial()
+
+    def to_dataset(self):
+        return MotionDataset(self.vel, self.pos)
 
     def plot_position(self, trial, ax=None):
 
