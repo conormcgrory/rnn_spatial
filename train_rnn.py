@@ -9,10 +9,10 @@ import motion
 from path_rnn import PathRNN
 
 # Path where data is loaded from
-DATA_FPATH = 'data/sim_2022_03_28.npz'
+DATA_FPATH = 'data/sim_2022_03_29.npz'
 
 # Path where model is saved
-MODEL_FPATH = 'models/test_2022_03_28.pt'
+MODEL_FPATH = 'models/test_2022_03_29.pt'
 
 # RNN parameters
 NUM_UNITS = 32
