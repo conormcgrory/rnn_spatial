@@ -7,7 +7,7 @@ import motion
 
 
 # Output filepath
-DATA_FPATH = 'data/sim_2022_03_10.npz'
+DATA_FPATH = 'data/sim_2022_03_28.npz'
 
 # Simulation parameters
 N_STEPS = 500
@@ -17,7 +17,7 @@ BOUNDARY_HEIGHT = 2.0
 TIME_STEP = 0.01
 STD_NORM = 0.2
 SPEED_VALS = [0.0, 0.1, 0.2, 0.3, 0.4] 
-P_SPEED = [0.2, 0.2, 0.2, 0.2, 0.2]
+P_SPEED = [0.8, 0.05, 0.05, 0.05, 0.05]
 RNG_SEED = 999
 
 
