@@ -1,4 +1,4 @@
-"""Script for training network on data"""
+"""Script for training path integration RNN"""
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,17 +8,25 @@ from torch.utils.data import Dataset, DataLoader
 import motion
 from path_rnn import PathRNN
 
-# Path where data is loaded from
-DATA_FPATH = 'data/sim_2022_03_29.npz'
 
 # Path where model is saved
-MODEL_FPATH = 'models/test_2022_03_29.pt'
+MODEL_FPATH = 'models/test_2022_04_05.pt'
+
+# Simulation parameters
+N_STEPS = 450
+BOUNDARY_TYPE = 'square'
+BOUNDARY_HEIGHT = 2.0
+TIME_STEP = 1.0
+STD_NORM = 0.33
+MAX_SPEED = 0.2
+P_MOVE = 0.1
+RNG_SEED = 999
 
 # RNN parameters
 NUM_UNITS = 32
 
 # Training parameters
-NUM_EPOCHS = 1000
+N_BATCHES = 1900
 BATCH_SIZE = 500
 LEARNING_RATE = 0.001
 
@@ -26,8 +34,18 @@ LEARNING_RATE = 0.001
 def print_params():
 
     print('filepaths:')
-    print(f'{DATA_FPATH=}')
     print(f'{MODEL_FPATH=}')
+    print('')
+
+    print('simulation params:')
+    print(f'{N_STEPS=}')
+    print(f'{BOUNDARY_TYPE=}')
+    print(f'{BOUNDARY_HEIGHT=}')
+    print(f'{TIME_STEP=}')
+    print(f'{STD_NORM=}')
+    print(f'{MAX_SPEED=}')
+    print(f'{P_MOVE=}')
+    print(f'{RNG_SEED=}')
     print('')
 
     print('rnn params:')
@@ -35,7 +53,7 @@ def print_params():
     print('')
 
     print('training params:')
-    print(f'{NUM_EPOCHS=}')
+    print(f'{N_BATCHES=}')
     print(f'{BATCH_SIZE=}')
     print(f'{LEARNING_RATE=}')
     print('')
@@ -45,17 +63,21 @@ def main():
     print('all params:\n')
     print_params()
 
-    print('loading simulation data...')
-    sim = motion.load_simulation(DATA_FPATH)
-    print('done.')
-
     print('initializing...')
 
-    # Create DataLoader for batch generation
-    dset = sim.to_dataset()
-    train_dataloader = DataLoader(dset, batch_size=BATCH_SIZE, shuffle=True)
+    # Create simulation
+    sim = motion.MotionSimulation(
+        n_steps=N_STEPS,
+        boundary_type=BOUNDARY_TYPE,
+        boundary_height=BOUNDARY_HEIGHT,
+        time_step=TIME_STEP,
+        std_norm=STD_NORM,
+        max_speed=MAX_SPEED,
+        p_move=P_MOVE,
+        rng_seed=RNG_SEED
+    )
 
-    # Instantiate model
+    # Create model
     model = PathRNN(n_units=NUM_UNITS)
 
     # Define loss function and optimizer
@@ -64,36 +86,37 @@ def main():
 
     print('done.')
 
-    # TODO: Change this to only loop through trials once
-    # TODO: Also need to check DataLoader to make sure it samples batches without replacement
     print('training network...')
-    for epoch in range(1, NUM_EPOCHS + 1):
+    for i in range(1, N_BATCHES + 1):
 
-        for vel_batch, pos_batch in train_dataloader:
+        # Sample next batch
+        vel_np, pos_np = sim.smp_batch(BATCH_SIZE)
+        vel = torch.Tensor(vel_np)
+        pos = torch.Tensor(pos_np)
 
-            # Clear gradients from previous epoch
-            optimizer.zero_grad()
+        # Clear gradients from previous batch
+        optimizer.zero_grad()
 
-            # Compute loss
-            pos_est, u_vals = model(vel_batch)
-            loss = criterion(pos_est, pos_batch)
+        # Compute loss
+        pos_est, _ = model(vel)
+        loss = criterion(pos_est, pos)
 
-            # Compute gradient via backprop
-            loss.backward()
+        # Compute gradient via backprop
+        loss.backward()
 
-            # Update model parameters
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0, norm_type=2)
-            optimizer.step()
+        # Update model parameters
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0, norm_type=2)
+        optimizer.step()
     
-        if epoch % 100 == 0:
-            print('Epoch: {}/{}.............'.format(epoch, NUM_EPOCHS), end=' ')
+        if i % 100 == 0:
+            print('Batch: {}/{}.............'.format(i, N_BATCHES), end=' ')
             print("Loss: {:.4f}".format(loss.item()))
+
     print('done.')
 
     print('saving model...')
     torch.save(model.state_dict(), MODEL_FPATH)
     print('done.')
-
 
 if __name__ == '__main__':
     main()

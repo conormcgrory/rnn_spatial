@@ -1,11 +1,17 @@
 """Motion and environment simulation"""
 
 import abc
+import os
+import json
 
 import numpy as np
 import matplotlib.pyplot as plt
-import torch
-from torch.utils.data import Dataset
+
+
+# Names of files storing parameters, velocity, and position data in output directory
+SIM_PARAMS_FNAME = 'params.json'
+SIM_VEL_FNAME = 'vel.npy'
+SIM_POS_FNAME = 'pos.npy'
 
 
 class Boundary(abc.ABC):
@@ -49,32 +55,16 @@ class SquareBoundary:
         ax.plot(x_vals, y_vals, '--')
 
 
-class MotionDataset(Dataset):
-
-    def __init__(self, vel, pos):
-
-        self.vel = torch.Tensor(vel)
-        self.pos = torch.Tensor(pos)
-        self.num_trials = vel.shape[0]
-
-    def __getitem__(self, index):
-        return self.vel[index], self.pos[index]
- 
-    def __len__(self):
-        return self.num_trials
-
-
 class MotionSimulation:
 
-    def __init__(self, n_steps, n_trials,
+    def __init__(self, n_steps,
         boundary_type='square', boundary_height=2.0, 
         time_step=0.1, std_norm=0.5, 
-        speed_vals=[0.0, 0.1, 0.2, 0.3, 0.4], p_speed=[0.2, 0.2, 0.2, 0.2, 0.2], 
+        max_speed=0.2, p_move=0.1,
         rng_seed=999):
 
-        # Save number of steps and trials
+        # Number of time steps per trial
         self.n_steps = n_steps
-        self.n_trials = n_trials
 
         # Boundary for spatial environment
         self.boundary_type = boundary_type
@@ -89,22 +79,21 @@ class MotionSimulation:
         self.std_norm = std_norm
         self.std_brownian = np.sqrt(time_step) * std_norm
         
-        # Speed distribution of animal
-        self.speed_vals = speed_vals
-        self.p_speed = p_speed
+        # Maximum speed of animal
+        self.max_speed = max_speed
 
-        # Random seed
+        # Probability of motion (i.e. nonzero speed) per step
+        self.p_move = p_move
+
+        # Initialize random generator using seed
         self.rng_seed = rng_seed
-
-        # Arrays for velocity and position are initialized to None
-        self.vel = None
-        self.pos = None
-
-    def _init_rng(self):
-        self.rng = np.random.default_rng(self.rng_seed)
-        
+        self.rng = np.random.default_rng(rng_seed)
+       
     def _smp_speed(self):
-        return self.rng.choice(self.speed_vals, p=self.p_speed)
+        if self.rng.binomial(1, self.p_move):
+            return self.rng.random() * self.max_speed
+        else:
+            return 0.0
 
     def _smp_init_direction(self):
         return self.rng.random() * 2 * np.pi
@@ -171,35 +160,45 @@ class MotionSimulation:
 
         return vel, pos
 
-    def run(self):
+    def smp_batch(self, n_trials):
 
-        self._init_rng()
-        self.pos = np.full((self.n_trials, self.n_steps, 2), np.nan)
-        self.vel = np.full((self.n_trials, self.n_steps, 2), np.nan)
+        vel = np.full((n_trials, self.n_steps, 2), np.nan)
+        pos = np.full((n_trials, self.n_steps, 2), np.nan)
 
-        for k in range(self.n_trials):
-            self.vel[k], self.pos[k] = self._smp_trial()
+        for k in range(n_trials):
+            vel[k], pos[k] = self._smp_trial()
 
-    def to_dataset(self):
-        return MotionDataset(self.vel, self.pos)
+        return vel, pos
 
-    def plot_position(self, trial, ax=None):
+    def get_params(self):
+        return dict(
+            n_steps=self.n_steps,
+            boundary_type=self.boundary_type,
+            boundary_height=self.boundary.height,
+            time_step=self.time_step,
+            std_norm=self.std_norm,
+            max_speed=self.max_speed,
+            p_move=self.p_move,
+            rng_seed=self.rng_seed
+        )
 
-        if ax is None:
-            ax = plt.gca()
 
-        # Make sure x- and y-scales are the same
-        ax.set_aspect('equal')
+def plot_position(boundary, pos, ax=None):
 
-        # Plot boundary
-        self.boundary.plot(ax)
+    if ax is None:
+        ax = plt.gca()
 
-        # Add origin point to beginning of position sequence
-        pos_x = np.concatenate(([0.0], self.pos[trial, :, 0]))
-        pos_y = np.concatenate(([0.0], self.pos[trial, :, 1]))
+    # Plot boundary
+    boundary.plot(ax)
 
-        # Plot position values
-        ax.plot(pos_x, pos_y)
+    # Add origin point to beginning of position sequence
+    pos_x = np.concatenate(([0.0], pos[:, 0]))
+    pos_y = np.concatenate(([0.0], pos[:, 1]))
+
+    # Plot position values
+    ax.plot(pos_x, pos_y)
+
+    ax.set_aspect('equal')
 
 
 def plot_position_estimate(boundary, pos_true, pos_est, ax=None):
@@ -223,47 +222,39 @@ def plot_position_estimate(boundary, pos_true, pos_est, ax=None):
     ax.set_aspect('equal')
     ax.legend()
 
-def save_simulation(sim, fpath):
-    """Save MotionSimulation object to file."""
+def save_simulation_results(params, vel, pos, dirpath):
+    """Save MotionSimulation results to directory."""
 
-    # Don't save simulation if it hasn't been run
-    if sim.vel is None or sim.pos is None:
-        raise ValueError('Simulation has not been run.')
+    # Create directory for saving results
+    os.mkdir(dirpath)
 
-    # Save all parameters and data as NumPy arrays
-    np.savez(fpath, 
-        n_steps=sim.n_steps,
-        n_trials=sim.n_trials,
-        boundary_type=sim.boundary_type,
-        boundary_height=sim.boundary.height,
-        time_step=sim.time_step,
-        speed_vals=sim.speed_vals,
-        p_speed=sim.p_speed,
-        rng_seed=sim.rng_seed,
-        pos=sim.pos, 
-        vel=sim.vel,
-        allow_pickle=False
-    )
+    # Filenames for simulation parameters, velocity, and position data
+    params_fpath = os.path.join(dirpath, SIM_PARAMS_FNAME)
+    vel_fpath = os.path.join(dirpath, SIM_VEL_FNAME)
+    pos_fpath = os.path.join(dirpath, SIM_POS_FNAME)
 
-def load_simulation(fpath):
-    """Load MotionSimulation object from file."""
+    # Save parameters to JSON file
+    with open(params_fpath, 'w') as f:
+        json.dump(params, f, indent=4)
 
-    with np.load(fpath) as data:
+    # Save velocity and position arrays to .npy files
+    np.save(vel_fpath, vel)
+    np.save(pos_fpath, pos)
 
-        # Create MotionSimulation object from parameters (stored as NumPy arrays)
-        sim = MotionSimulation(
-            n_steps=data['n_steps'].item(),
-            n_trials=data['n_trials'].item(),
-            boundary_type=data['boundary_type'].item(),
-            boundary_height=data['boundary_height'].item(),
-            time_step=data['time_step'].item(),
-            speed_vals=data['speed_vals'],
-            p_speed=data['p_speed'],
-            rng_seed=data['rng_seed'].item()
-        )
+def load_simulation_results(dirpath):
+    """Load MotionSimulation results from directory."""
 
-        # Set velocity and position arrays of object
-        sim.vel = data['vel']
-        sim.pos = data['pos']
+    # Filenames for simulation parameters, velocity, and position data
+    params_fpath = os.path.join(dirpath, SIM_PARAMS_FNAME)
+    vel_fpath = os.path.join(dirpath, SIM_VEL_FNAME)
+    pos_fpath = os.path.join(dirpath, SIM_POS_FNAME)
 
-        return sim
+    # Load parameters from JSON file
+    with open(params_fpath, 'r') as f:
+        params = json.load(f)
+
+    # Load velocity and position arrays from .npy files
+    vel = np.load(vel_fpath)
+    pos = np.load(pos_fpath)
+
+    return params, vel, pos
