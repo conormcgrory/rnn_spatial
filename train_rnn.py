@@ -64,6 +64,8 @@ def main():
 
     print('done.')
 
+    # TODO: Change this to only loop through trials once
+    # TODO: Also need to check DataLoader to make sure it samples batches without replacement
     print('training network...')
     for epoch in range(1, NUM_EPOCHS + 1):
 

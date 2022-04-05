@@ -10,14 +10,17 @@ import motion
 DATA_FPATH = 'data/sim_2022_03_29.npz'
 
 # Simulation parameters
-N_STEPS = 500
-N_TRIALS = 10000
+N_STEPS = 450
+N_TRIALS = 950000
 BOUNDARY_TYPE = 'square'
 BOUNDARY_HEIGHT = 2.0
-TIME_STEP = 0.1
-STD_NORM = 0.2
-SPEED_VALS = [0.0, 0.1, 0.2, 0.3, 0.4] 
+TIME_STEP = 1.0
+STD_NORM = 0.33
+
+# Need to change to match Chris's code!
+SPEED_VALS = [0.0, 0.1, 0.2, 0.3, 0.4]
 P_SPEED = [0.8, 0.05, 0.05, 0.05, 0.05]
+
 RNG_SEED = 999
 
 
