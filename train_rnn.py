@@ -23,7 +23,7 @@ P_MOVE = 0.1
 RNG_SEED = 999
 
 # RNN parameters
-NUM_UNITS = 32
+NUM_UNITS = 100
 
 # Training parameters
 N_BATCHES = 1900
