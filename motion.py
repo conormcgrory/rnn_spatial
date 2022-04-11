@@ -201,6 +201,136 @@ def plot_position(boundary, pos, ax=None):
     ax.set_aspect('equal')
 
 
+class MotionSimulationCartesian:
+    """Class for generating simulated trajectories with velocity in Cartesian coordinates."""
+
+    def __init__(self, n_steps,
+        boundary_type='square', boundary_height=2.0, 
+        time_step=0.1, std_norm=0.5, 
+        max_speed=0.2, p_move=0.1,
+        rng_seed=999):
+
+        # Number of time steps per trial
+        self.n_steps = n_steps
+
+        # Boundary for spatial environment
+        self.boundary_type = boundary_type
+        self.boundary_height = boundary_height
+        if boundary_type == 'square':
+            self.boundary = SquareBoundary(boundary_height)
+        else:
+            raise ValueError(f'Boundary "{boundary_type}" not supported.')
+            
+        # Compute Brownian motion stddev from time step and normalized stddev
+        self.time_step = time_step
+        self.std_norm = std_norm
+        self.std_brownian = np.sqrt(time_step) * std_norm
+        
+        # Maximum speed of animal
+        self.max_speed = max_speed
+
+        # Probability of motion (i.e. nonzero speed) per step
+        self.p_move = p_move
+
+        # Initialize random generator using seed
+        self.rng_seed = rng_seed
+        self.rng = np.random.default_rng(rng_seed)
+       
+    def _smp_speed(self):
+        if self.rng.binomial(1, self.p_move):
+            return self.rng.random() * self.max_speed
+        else:
+            return 0.0
+
+    def _smp_init_direction(self):
+        return self.rng.random() * 2 * np.pi
+
+    def _smp_direction_step(self):
+        return self.std_brownian * self.rng.standard_normal()
+
+    def _smp_direction_collision(self):
+        return self.rng.random() * 2 * np.pi
+
+    def _smp_trial(self):
+
+        # Position (cartesian coordinates)
+        pos_x = np.full(self.n_steps, np.nan)
+        pos_y = np.full(self.n_steps, np.nan)
+
+        # Velocity (polar coordinates)
+        speed = np.full(self.n_steps, np.nan)
+        theta = np.full(self.n_steps, np.nan)
+
+        # Velocity (cartesian coordinates)
+        vel_x = np.full(self.n_steps, np.nan)
+        vel_y = np.full(self.n_steps, np.nan)
+
+        # Initialize velocity
+        speed[0] = self._smp_speed()
+        theta[0] = self._smp_init_direction()
+        vel_x[0] = speed[0] * np.cos(theta[0])
+        vel_y[0] = speed[0] * np.sin(theta[0])
+
+        # Initalize position
+        pos_x[0] = self.time_step * vel_x[0]
+        pos_y[0] = self.time_step * vel_y[0]
+
+        # Check boundary condition
+        if not self.boundary.contains(pos_x[0], pos_y[0]):
+            raise ValueError('First step is outside boundary')
+
+        for t in range(1, self.n_steps):
+
+            # Update velocity
+            speed[t] = self._smp_speed()
+            theta[t] = theta[t - 1] + self._smp_direction_step()
+            vel_x[t] = speed[t] * np.cos(theta[t])
+            vel_y[t] = speed[t] * np.sin(theta[t])
+
+            # Update position
+            pos_x[t] = pos_x[t - 1] + self.time_step * vel_x[t]
+            pos_y[t] = pos_y[t - 1] + self.time_step * vel_y[t]
+ 
+            # If animal collides with wall, sample angle from uniform distribution
+            while not self.boundary.contains(pos_x[t], pos_y[t]):
+
+                # Resample direction
+                theta[t] = self._smp_direction_collision()
+                vel_x[t] = speed[t] * np.cos(theta[t])
+                vel_y[t] = speed[t] * np.sin(theta[t])
+
+                # Update position
+                pos_x[t] = pos_x[t - 1] + self.time_step * vel_x[t]
+                pos_y[t] = pos_y[t - 1] + self.time_step * vel_y[t]
+
+        vel = np.stack((vel_x, vel_y), axis=-1)
+        pos = np.stack((pos_x, pos_y), axis=-1)
+
+        return vel, pos
+
+    def smp_batch(self, n_trials):
+
+        vel = np.full((n_trials, self.n_steps, 2), np.nan)
+        pos = np.full((n_trials, self.n_steps, 2), np.nan)
+
+        for k in range(n_trials):
+            vel[k], pos[k] = self._smp_trial()
+
+        return vel, pos
+
+    def get_params(self):
+        return dict(
+            n_steps=self.n_steps,
+            boundary_type=self.boundary_type,
+            boundary_height=self.boundary.height,
+            time_step=self.time_step,
+            std_norm=self.std_norm,
+            max_speed=self.max_speed,
+            p_move=self.p_move,
+            rng_seed=self.rng_seed
+        )
+
+
 def plot_position_estimate(boundary, pos_true, pos_est, ax=None):
 
     if ax is None:
