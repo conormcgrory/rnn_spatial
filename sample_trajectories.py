@@ -7,7 +7,7 @@ import motion
 
 
 # Output directory
-DATA_DIR = 'data/sim_2022_04_05'
+DATA_DIR = 'data/sim_2022_04_12'
 
 # Simulation parameters
 N_STEPS = 450
@@ -49,7 +49,7 @@ def main():
     print_params()
 
     print('creating simulation...')
-    sim = motion.MotionSimulation(
+    sim = motion.MotionSimulationCartesian(
         n_steps=N_STEPS,
         boundary_type=BOUNDARY_TYPE,
         boundary_height=BOUNDARY_HEIGHT,

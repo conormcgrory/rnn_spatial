@@ -9,6 +9,8 @@ __pycache__/
 # Data files
 *.npz
 *.h5
+*.npy
+*.json
 
 # Model files
 *.pt
