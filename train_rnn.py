@@ -10,7 +10,7 @@ from path_rnn import PathRNN
 
 
 # Path where model is saved
-MODEL_FPATH = 'models/test_2022_04_12.pt'
+MODEL_FPATH = 'models/test_2022_04_13.pt'
 
 # Simulation parameters
 N_STEPS = 450
@@ -104,8 +104,10 @@ def main():
         # Compute gradient via backprop
         loss.backward()
 
+        # Gradient clipping
+        #torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0, norm_type=2)
+
         # Update model parameters
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0, norm_type=2)
         optimizer.step()
     
         if i % 100 == 0:
