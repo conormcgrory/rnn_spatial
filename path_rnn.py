@@ -20,16 +20,17 @@ class PathRNN(torch.nn.Module):
         # Initialize RNN weights
         for name, param in self.rnn.named_parameters():
             if name == 'bias_ih_l0':
-                 torch.nn.init.constant_(param, 0.0)
+                 torch.nn.init.zeros_(param)
             elif name == 'bias_hh_l0':
-                 torch.nn.init.constant_(param, 0.0)
+                 torch.nn.init.zeros_(param)
             elif name == 'weight_ih_l0':
                  torch.nn.init.normal_(param, mean=0.0, std=np.sqrt(1/2))
             elif name == 'weight_hh_l0':
                  torch.nn.init.orthogonal_(param)
 
         # Initialize output weights
-        torch.nn.init.zeros_(self.output)
+        torch.nn.init.zeros_(self.output.weight.data)
+        torch.nn.init.zeros_(self.output.bias.data)
     
     def forward(self, vel):
         
