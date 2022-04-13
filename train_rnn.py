@@ -28,7 +28,7 @@ NUM_UNITS = 100
 # Training parameters
 N_BATCHES = 1900
 BATCH_SIZE = 500
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.001
 
 
 def print_params():
