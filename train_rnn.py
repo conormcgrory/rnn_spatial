@@ -10,7 +10,7 @@ from path_rnn import PathRNN
 
 
 # Path where model is saved
-MODEL_FPATH = 'models/test_2022_04_13.pt'
+MODEL_FPATH = 'models/test_2022_04_14.pt'
 
 # Simulation parameters
 N_STEPS = 450

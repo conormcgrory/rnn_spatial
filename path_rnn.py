@@ -31,11 +31,19 @@ class PathRNN(torch.nn.Module):
         # Initialize output weights
         torch.nn.init.zeros_(self.output.weight.data)
         torch.nn.init.zeros_(self.output.bias.data)
+
+    def init_hidden(self, batch_size):
+
+        return torch.zeros(1, batch_size, self.n_units)
     
     def forward(self, vel):
+
+        # Initializing hidden state for first input
+        batch_size = vel.size(0)
+        u_init = self.init_hidden(batch_size)
         
         # Run RNN on velocity sequences to get hidden unit values
-        u_vals, _ = self.rnn(vel)
+        u_vals, _ = self.rnn(vel, u_init)
         
         # Apply output weights to get estimated position
         pos_est = self.output(u_vals)
