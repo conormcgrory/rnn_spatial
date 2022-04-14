@@ -28,7 +28,8 @@ NUM_UNITS = 100
 # Training parameters
 N_BATCHES = 1900
 BATCH_SIZE = 500
-LEARNING_RATE = 0.001
+LEARNING_RATE = 1e-3
+WEIGHT_DECAY = 1e-4
 
 
 def print_params():
@@ -56,6 +57,7 @@ def print_params():
     print(f'{N_BATCHES=}')
     print(f'{BATCH_SIZE=}')
     print(f'{LEARNING_RATE=}')
+    print(f'{WEIGHT_DECAY=}')
     print('')
 
 def main():
@@ -82,7 +84,7 @@ def main():
 
     # Define loss function and optimizer
     criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
+    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 
     print('done.')
 
