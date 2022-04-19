@@ -60,7 +60,7 @@ class MotionSimulation:
     def __init__(self, n_steps,
         boundary_type='square', boundary_height=2.0, 
         time_step=0.1, std_norm=0.5, 
-        max_speed=0.2, p_move=0.1,
+        mean_speed=0.4,
         rng_seed=999):
 
         # Number of time steps per trial
@@ -79,21 +79,16 @@ class MotionSimulation:
         self.std_norm = std_norm
         self.std_brownian = np.sqrt(time_step) * std_norm
         
-        # Maximum speed of animal
-        self.max_speed = max_speed
-
-        # Probability of motion (i.e. nonzero speed) per step
-        self.p_move = p_move
+        # Mean speed of animal is used to compute scale of Rayleigh distribution
+        self.mean_speed = mean_speed
+        self.scl_speed = mean_speed * np.sqrt(2 / np.pi)
 
         # Initialize random generator using seed
         self.rng_seed = rng_seed
         self.rng = np.random.default_rng(rng_seed)
        
     def _smp_speed(self):
-        if self.rng.binomial(1, self.p_move):
-            return self.rng.random() * self.max_speed
-        else:
-            return 0.0
+        return self.rng.rayleigh(self.scl_speed)
 
     def _smp_init_direction(self):
         return self.rng.random() * 2 * np.pi

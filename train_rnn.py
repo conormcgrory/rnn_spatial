@@ -10,7 +10,7 @@ from path_rnn import PathRNN
 
 
 # Path where model is saved
-MODEL_FPATH = 'models/test_2022_04_14.pt'
+MODEL_FPATH = 'models/test_2022_04_19.pt'
 
 # Simulation parameters
 N_STEPS = 450
@@ -18,8 +18,7 @@ BOUNDARY_TYPE = 'square'
 BOUNDARY_HEIGHT = 2.0
 TIME_STEP = 1.0
 STD_NORM = 0.33
-MAX_SPEED = 0.2
-P_MOVE = 0.1
+MEAN_SPEED = 0.4
 RNG_SEED = 999
 
 # RNN parameters
@@ -44,8 +43,7 @@ def print_params():
     print(f'{BOUNDARY_HEIGHT=}')
     print(f'{TIME_STEP=}')
     print(f'{STD_NORM=}')
-    print(f'{MAX_SPEED=}')
-    print(f'{P_MOVE=}')
+    print(f'{MEAN_SPEED=}')
     print(f'{RNG_SEED=}')
     print('')
 
@@ -74,8 +72,7 @@ def main():
         boundary_height=BOUNDARY_HEIGHT,
         time_step=TIME_STEP,
         std_norm=STD_NORM,
-        max_speed=MAX_SPEED,
-        p_move=P_MOVE,
+        max_speed=MEAN_SPEED,
         rng_seed=RNG_SEED
     )
 
