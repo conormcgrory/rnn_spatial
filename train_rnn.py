@@ -10,7 +10,7 @@ from path_rnn import PathRNN
 
 
 # Path where model is saved
-MODEL_FPATH = 'models/test_2022_04_19.pt'
+MODEL_FPATH = 'models/test_2022_04_19_02.pt'
 
 # Simulation parameters
 N_STEPS = 450
@@ -27,7 +27,7 @@ NUM_UNITS = 100
 # Training parameters
 N_BATCHES = 1900
 BATCH_SIZE = 500
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 1e-4
 WEIGHT_DECAY = 1e-4
 
 
