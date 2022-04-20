@@ -7,7 +7,7 @@ import motion
 
 
 # Output directory
-DATA_DIR = 'data/sim_2022_04_12'
+DATA_DIR = 'data/sim_2022_04_19_polar'
 
 # Simulation parameters
 N_STEPS = 450
@@ -15,8 +15,7 @@ BOUNDARY_TYPE = 'square'
 BOUNDARY_HEIGHT = 2.0
 TIME_STEP = 1.0
 STD_NORM = 0.33
-MAX_SPEED = 0.2
-P_MOVE = 0.1
+MEAN_SPEED = 0.2
 RNG_SEED = 999
 
 # Number of trials to run simulation for
@@ -35,8 +34,7 @@ def print_params():
     print(f'{BOUNDARY_HEIGHT=}')
     print(f'{TIME_STEP=}')
     print(f'{STD_NORM=}')
-    print(f'{MAX_SPEED=}')
-    print(f'{P_MOVE=}')
+    print(f'{MEAN_SPEED=}')
     print(f'{RNG_SEED=}')
     print('')
 
@@ -49,14 +47,13 @@ def main():
     print_params()
 
     print('creating simulation...')
-    sim = motion.MotionSimulationCartesian(
+    sim = motion.MotionSimulation(
         n_steps=N_STEPS,
         boundary_type=BOUNDARY_TYPE,
         boundary_height=BOUNDARY_HEIGHT,
         time_step=TIME_STEP,
         std_norm=STD_NORM,
-        max_speed=MAX_SPEED,
-        p_move=P_MOVE,
+        mean_speed=MEAN_SPEED,
         rng_seed=RNG_SEED
     )
     print('done.')

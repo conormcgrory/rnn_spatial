@@ -72,7 +72,7 @@ def main():
         boundary_height=BOUNDARY_HEIGHT,
         time_step=TIME_STEP,
         std_norm=STD_NORM,
-        max_speed=MEAN_SPEED,
+        mean_speed=MEAN_SPEED,
         rng_seed=RNG_SEED
     )
 
