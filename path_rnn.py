@@ -12,14 +12,18 @@ class PathRNN(torch.nn.Module):
         self.n_units = n_units
 
         # RNN Layer
-        self.rnn = torch.nn.RNN(input_size=2, hidden_size=n_units, num_layers=1, nonlinearity='tanh', batch_first=True, bias=False)
+        self.rnn = torch.nn.RNN(input_size=2, hidden_size=n_units, num_layers=1, nonlinearity='tanh', batch_first=True, bias=True)
 
         # Output layer
         self.output = torch.nn.Linear(n_units, 2, bias=False)
 
         # Initialize RNN weights
         for name, param in self.rnn.named_parameters():
-            if name == 'weight_ih_l0':
+            if name == 'bias_ih_l0':
+                torch.nn.init.zeros_(param)
+            elif name == 'bias_hh_l0':
+                torch.nn.init.zeros_(param)
+            elif name == 'weight_ih_l0':
                  torch.nn.init.normal_(param, mean=0.0, std=np.sqrt(1/2))
             elif name == 'weight_hh_l0':
                  torch.nn.init.orthogonal_(param)

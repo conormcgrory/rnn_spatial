@@ -1,16 +1,14 @@
 """Script for training path integration RNN"""
 
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
-from torch.utils.data import Dataset, DataLoader
 
 import motion
 from path_rnn import PathRNN
 
 
 # Path where model is saved
-MODEL_FPATH = 'models/test_2022_04_19_03.pt'
+MODEL_FPATH = 'models/test_2022_04_20_01.pt'
 
 # Simulation parameters
 N_STEPS = 450
