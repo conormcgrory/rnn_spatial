@@ -10,7 +10,7 @@ from path_rnn import PathRNN
 
 
 # Path where model is saved
-MODEL_FPATH = 'models/test_2022_04_19_02.pt'
+MODEL_FPATH = 'models/test_2022_04_19_03.pt'
 
 # Simulation parameters
 N_STEPS = 450
@@ -66,7 +66,7 @@ def main():
     print('initializing...')
 
     # Create simulation
-    sim = motion.MotionSimulationCartesian(
+    sim = motion.MotionSimulation(
         n_steps=N_STEPS,
         boundary_type=BOUNDARY_TYPE,
         boundary_height=BOUNDARY_HEIGHT,
