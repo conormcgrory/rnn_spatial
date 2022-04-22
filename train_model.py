@@ -7,13 +7,11 @@ from trainer import Trainer
 from parameters import get_default_params
 
 # Path where model is saved
-MODEL_FPATH = 'models/test_2022_04_21.pt'
+MODEL_FPATH = 'models/test_2022_04_22.pt'
 
 # Set parameters
 params = get_default_params()
-#params.trainer.batch_size = 100
-#params.trainer.n_batches = 3
-#params.traj.rng_seed = 998
+params.traj.rng_seed = 998
 
 
 def main():
