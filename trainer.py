@@ -67,9 +67,9 @@ class Trainer:
             # Update model parameters
             self.optimizer.step()
     
-        if i % 100 == 0:
-            print('Batch: {}/{}.............'.format(i, self.params.n_batches), end=' ')
-            print("Loss: {:.4f}".format(loss.item()))
+            if i % 100 == 0:
+                print('Batch: {}/{}.............'.format(i, self.params.n_batches), end=' ')
+                print("Loss: {:.4f}".format(loss.item()))
 
     def save_model(self, fpath):
         torch.save(self.model.state_dict(), fpath)
