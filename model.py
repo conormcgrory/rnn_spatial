@@ -1,8 +1,11 @@
 """RNN for path integration"""
 
+from inspect import Parameter
+
 import numpy as np
 import torch
 import dataclasses
+
 
 @dataclasses.dataclass
 class ModelHyperParams:

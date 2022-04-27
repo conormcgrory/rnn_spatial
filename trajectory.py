@@ -184,10 +184,6 @@ class TrajectoryGenerator:
 
         return vel, pos
 
-    # TODO: Get rid of this!
-    def get_params(self):
-        return dataclasses.asdict(self.params)
-
 
 def plot_position(boundary, pos, ax=None):
 

@@ -3,16 +3,15 @@
 from trajectory import TrajectoryGenerator
 from model import PathRNN
 from trainer import Trainer
-
-from parameters import get_default_params
+from run import get_default_params, save_run
 
 # Path where model is saved
-MODEL_FPATH = 'models/test_2022_04_26_02.pt'
+RUN_FPATH = 'models/20220427_01'
 
 # Set parameters
 params = get_default_params()
 params.traj.rng_seed = 1993
-params.trainer.n_batches = 5000
+params.trainer.n_batches = 8000
 
 
 def main():
@@ -30,8 +29,8 @@ def main():
     trainer.train()
     print('done.')
 
-    print('saving model...')
-    trainer.save_model(MODEL_FPATH)
+    print('saving params and model...')
+    save_run(params, model, RUN_FPATH)
     print('done.')
 
 
