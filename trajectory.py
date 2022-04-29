@@ -70,7 +70,7 @@ class TrajectoryParams:
     time_step: float = 0.1
     std_norm: float = 0.5
     mean_speed: float = 0.2
-    coordinates = 'cartesian'
+    coordinates: str = 'cartesian'
 
 class TrajectoryGenerator:
 

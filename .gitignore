@@ -6,6 +6,12 @@ __pycache__/
 # Jupyter checkpoints
 .ipynb_checkpoints/
 
+# Models folder
+models/
+
+# Data folder
+data/
+
 # Data files
 *.npz
 *.h5

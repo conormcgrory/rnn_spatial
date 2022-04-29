@@ -23,19 +23,22 @@ class RunParameters:
     # Training parameters
     trainer: TrainerParams = TrainerParams()
 
+    def _print_subgroup(self, params, indent=4):
+
+        pad = ' ' * indent
+        pdict = dataclasses.asdict(params)
+
+        for k, v in pdict.items():
+            print(f'{pad}{k}: {v}')
+
     def print(self):
 
         print('trajectory:')
-        print(dataclasses.asdict(self.traj))
-        print('')
-
+        self._print_subgroup(self.traj)
         print('model:')
-        print(dataclasses.asdict(self.model))
-        print('')
-
+        self._print_subgroup(self.model)
         print('trainer:')
-        print(dataclasses.asdict(self.trainer))
-        print('')
+        self._print_subgroup(self.trainer)
 
 
 def params_to_dict(params):
