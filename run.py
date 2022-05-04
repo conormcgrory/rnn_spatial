@@ -2,6 +2,7 @@
 
 import os
 import dataclasses
+import subprocess
 
 import torch
 import json
@@ -61,6 +62,14 @@ def get_default_params():
     return RunParameters()
 
 
+def get_git_short_hash():
+
+    short_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'])
+    short_hash = str(short_hash, "utf-8").strip()
+
+    return short_hash
+
+
 def save_run(params:RunParameters, model: PathRNN, dirpath: str):
 
     # Create directory for saving results
@@ -69,6 +78,7 @@ def save_run(params:RunParameters, model: PathRNN, dirpath: str):
     # Filenames for parameters and model
     params_fpath = os.path.join(dirpath, 'params.json')
     model_fpath = os.path.join(dirpath, 'model.pt')
+    info_fpath = os.path.join(dirpath, 'runinfo.json')
 
     # Save parameters to JSON file
     with open(params_fpath, 'w') as f:
@@ -77,6 +87,12 @@ def save_run(params:RunParameters, model: PathRNN, dirpath: str):
 
     # Save state dict of model
     torch.save(model.state_dict(), model_fpath)
+
+    # Save run info to JSON file
+    commit = get_git_short_hash()
+    with open(info_fpath, 'w') as f:
+        info_dict = {'commit': commit}
+        json.dump(info_dict, f, indent=4)
 
 
 def load_run(dirpath):
