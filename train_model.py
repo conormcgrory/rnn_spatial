@@ -6,13 +6,13 @@ from trainer import Trainer
 from run import get_default_params, save_run
 
 # Path where model is saved
-RUN_FPATH = 'models/20220510_01'
+RUN_FPATH = 'models/20220511_01'
 
 # Set parameters
 params = get_default_params()
 params.traj.rng_seed = 1993
 params.trainer.n_batches = 8000
-params.trainer.lambda_h = 1.0
+params.trainer.lambda_h = 2.0
 
 
 def main():
