@@ -9,7 +9,7 @@ import json
 
 from trajectory import TrajectoryParams
 from model import ModelHyperParams, PathRNN
-from trainer import TrainerParams
+from trainer import TrainerParams, Trainer
 
 
 @dataclasses.dataclass
@@ -70,7 +70,7 @@ def get_git_short_hash():
     return short_hash
 
 
-def save_run(params:RunParameters, model: PathRNN, dirpath: str):
+def save_run(params: RunParameters, trainer: Trainer, dirpath: str):
 
     # Create directory for saving results
     os.mkdir(dirpath)
@@ -86,12 +86,16 @@ def save_run(params:RunParameters, model: PathRNN, dirpath: str):
         json.dump(pdict, f, indent=4)
 
     # Save state dict of model
-    torch.save(model.state_dict(), model_fpath)
+    torch.save(trainer.model.state_dict(), model_fpath)
 
     # Save run info to JSON file
     commit = get_git_short_hash()
     with open(info_fpath, 'w') as f:
-        info_dict = {'commit': commit}
+        info_dict = {
+            'commit': commit,
+            'mse_steps': trainer.mse_steps,
+            'mse_vals': trainer.mse_vals
+        }
         json.dump(info_dict, f, indent=4)
 
 

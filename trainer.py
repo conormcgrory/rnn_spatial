@@ -58,6 +58,9 @@ class TrainerParams:
 
 class Trainer:
 
+    # Number of steps to wait before saving new MSE value
+    NSTEPS_MSE = 100
+
     def __init__(self, params: TrainerParams, traj_gen: TrajectoryGenerator, model: PathRNN):
 
         # Training parameters
@@ -70,13 +73,20 @@ class Trainer:
         self.model = model
 
         # Loss
-        self.criterion = TrainingLoss(lambda_w=params.lambda_w, lambda_h=params.lambda_h)
+        self.loss_criterion = TrainingLoss(lambda_w=params.lambda_w, lambda_h=params.lambda_h)
 
         # Optimizer
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), 
             lr=self.params.learning_rate,
         )
+
+        # Module for computing MSE
+        self.mse_criterion = torch.nn.MSELoss()
+
+        # Arrays for storing steps and corresponding MSE values
+        self.mse_steps = []
+        self.mse_vals = []
 
     def train(self):
 
@@ -96,17 +106,19 @@ class Trainer:
             # Compute loss using predictions, activations, and weights
             w_ih = self.model.rnn.weight_ih_l0.data
             w_out = self.model.output.weight.data
-            loss = self.criterion(pos, h, pos_est, w_ih, w_out)
+            loss = self.loss_criterion(pos, h, pos_est, w_ih, w_out)
  
-            # Compute gradient via backprop
+            # Compute gradient with respect to loss via backprop
             loss.backward()
 
             # Update model parameters
             self.optimizer.step()
-    
-            if i % 100 == 0:
-                print('Batch: {}/{}.............'.format(i, self.params.n_batches), end=' ')
-                print("Loss: {:.4f}".format(loss.item()))
 
+            # Save MSE value
+            if i % self.NSTEPS_MSE == 0:
+                mse = self.mse_criterion(pos, pos_est).item()
+                self.mse_steps.append(i)
+                self.mse_vals.append(mse)
+    
     def save_model(self, fpath):
         torch.save(self.model.state_dict(), fpath)
