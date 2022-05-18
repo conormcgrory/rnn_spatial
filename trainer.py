@@ -1,6 +1,7 @@
 """Class for training RNN models"""
 
 import dataclasses
+import copy
 
 import numpy as np
 import torch
@@ -40,9 +41,6 @@ class TrainingLoss(torch.nn.Module):
 @dataclasses.dataclass
 class TrainerParams:
 
-    # Number of batches to run training for
-    n_batches: int = 1900
-
     # Number of trials per batch
     batch_size: int = 500
 
@@ -57,9 +55,6 @@ class TrainerParams:
 
 
 class Trainer:
-
-    # Number of steps to wait before saving new MSE value
-    NSTEPS_MSE = 100
 
     def __init__(self, params: TrainerParams, traj_gen: TrajectoryGenerator, model: PathRNN):
 
@@ -81,44 +76,46 @@ class Trainer:
             lr=self.params.learning_rate,
         )
 
-        # Module for computing MSE
-        self.mse_criterion = torch.nn.MSELoss()
+        # Counter for number of training steps
+        self.n_steps = 0
 
-        # Arrays for storing steps and corresponding MSE values
-        self.mse_steps = []
-        self.mse_vals = []
+    def step(self):
+        """Present one batch to model and update parameters"""
 
-    def train(self):
+        # Sample batch from trajectory generator
+        vel_np, pos_np = self.traj_gen.smp_batch(self.params.batch_size)
+        vel = torch.Tensor(vel_np)
+        pos = torch.Tensor(pos_np)
 
-        for i in range(1, self.params.n_batches + 1):
+        # Clear gradients from previous batch
+        self.optimizer.zero_grad()
 
-            # Sample next batch
-            vel_np, pos_np = self.traj_gen.smp_batch(self.params.batch_size)
-            vel = torch.Tensor(vel_np)
-            pos = torch.Tensor(pos_np)
+        # Predict position for batch
+        pos_est, h = self.model(vel)
 
-            # Clear gradients from previous batch
-            self.optimizer.zero_grad()
-
-            # Predict position for batch
-            pos_est, h = self.model(vel)
-
-            # Compute loss using predictions, activations, and weights
-            w_ih = self.model.rnn.weight_ih_l0.data
-            w_out = self.model.output.weight.data
-            loss = self.loss_criterion(pos, h, pos_est, w_ih, w_out)
+        # Compute loss using predictions, activations, and weights
+        w_ih = self.model.rnn.weight_ih_l0.data
+        w_out = self.model.output.weight.data
+        loss = self.loss_criterion(pos, h, pos_est, w_ih, w_out)
  
-            # Compute gradient with respect to loss via backprop
-            loss.backward()
+        # Compute gradient with respect to loss via backprop
+        loss.backward()
 
-            # Update model parameters
-            self.optimizer.step()
+        # Update model parameters
+        self.optimizer.step()
 
-            # Save MSE value
-            if i % self.NSTEPS_MSE == 0:
-                mse = self.mse_criterion(pos, pos_est).item()
-                self.mse_steps.append(i)
-                self.mse_vals.append(mse)
-    
-    def save_model(self, fpath):
-        torch.save(self.model.state_dict(), fpath)
+        # Increment step counter
+        self.n_steps = self.n_steps + 1
+
+    def train(self, n_steps):
+        """Train model for number of steps."""
+
+        for i in range(n_steps):
+            self.step()
+
+
+    # TODO: Move this out of class
+    def model_state(self):
+        """Return a copy of the model's current state dict"""
+
+        return copy.deepcopy(self.model.state_dict())
