@@ -1,6 +1,5 @@
 """Class for managing parameters of full training runs."""
 
-import subprocess
 import argparse
 
 import yaml
@@ -64,7 +63,7 @@ def print_params(params: dict):
     print(yaml.dump(params, default_flow_style=False))
 
 
-def parse_args() -> (str, dict):
+def parse_args() -> tuple[str, dict]:
     """Parse output directory and parameters from command-line args."""
 
     # Parser object
@@ -210,4 +209,3 @@ def parse_args() -> (str, dict):
     }
 
     return args.out_dir, params
-

@@ -1,20 +1,20 @@
 """Script for sampling trajectories and saving to file"""
 
 import os
-import dataclasses
 
 import numpy as np
 import matplotlib.pyplot as plt
 import json
 
+import parameters
 import trajectory
 
 
 # Output directory
-DATA_DIR = 'data/test_01'
+DATA_DIR = 'data/test_02'
 
 # Trajectory parameters
-params = trajectory.TrajectoryParams(rng_seed=888)
+params = parameters.get_default_params()['trajectory']
 
 # Number of trials to run simulation for
 N_TRIALS = 2000
@@ -32,8 +32,7 @@ def save_results(params, vel, pos, dirpath):
 
     # Save parameters to JSON file
     with open(params_fpath, 'w') as f:
-        pdict = dataclasses.asdict(params)
-        json.dump(pdict, f, indent=4)
+        json.dump(params, f, indent=4)
 
     # Save velocity and position arrays to .npy files
     np.save(vel_fpath, vel)
@@ -43,11 +42,11 @@ def save_results(params, vel, pos, dirpath):
 def main():
 
     print('params:')
-    print(dataclasses.asdict(params))
+    params.print_params(params)
     print('')
 
     print('sampling trajectories...')
-    tgen = trajectory.TrajectoryGenerator(params)
+    tgen = trajectory.TrajectoryGenerator(**params)
     vel, pos = tgen.smp_batch(N_TRIALS)
     print('done.\n')
 

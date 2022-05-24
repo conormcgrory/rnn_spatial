@@ -7,23 +7,48 @@ This code was adapted from Ganguli et al., 2019
 
 import numpy as np
 
-import scipy.stats
 import torch
 import matplotlib.pyplot as plt
+from scipy.stats import binned_statistic_2d
 
 from model import PathRNN
 from trajectory import TrajectoryGenerator
 
 
-# TODO: Simplify this by only using one batch
-def compute_ratemaps(model:PathRNN, tgen:TrajectoryGenerator, batch_size=200, n_batches=10, res=20):
+def compute_ratemaps(model:PathRNN, tgen:TrajectoryGenerator, n_trials=5000, res=20):
     """Compute ratemaps for given model."""
 
     # Number of hidden units
-    h_size = model.hparams.n_units
+    h_size = model.n_units
 
     # Number of total points in each batch
-    n_pts = batch_size * tgen.params.n_steps
+    n_pts = n_trials * tgen.n_steps
+
+    # Sample test batch
+    vel, pos = tgen.smp_batch(n_trials)
+        
+    # Run model on test batch and save hidden unit values
+    _, h  = model.run_np(vel)
+
+    # Combine all trials
+    pos = np.reshape(pos, (-1, 2))
+    h = np.reshape(h, (-1, h_size))
+
+    # Compute activation estimates
+    activations = binned_statistic_2d(pos[:, 0], pos[:, 1], h.T, statistic='mean', bins=res)[0]
+
+    return activations, pos, h
+
+
+# TODO: Simplify this by only using one batch
+def _compute_ratemaps_orig(model:PathRNN, tgen:TrajectoryGenerator, batch_size=200, n_batches=10, res=20):
+    """Compute ratemaps for given model."""
+
+    # Number of hidden units
+    h_size = model.n_units
+
+    # Number of total points in each batch
+    n_pts = batch_size * tgen.n_steps
 
     # Hidden unit values
     h = np.zeros([n_batches, n_pts, h_size])
@@ -37,9 +62,7 @@ def compute_ratemaps(model:PathRNN, tgen:TrajectoryGenerator, batch_size=200, n_
         vel_batch, pos_batch = tgen.smp_batch(batch_size)
         
         # Run model on test batch and save hidden unit values
-        vel_batch_t = torch.Tensor(vel_batch)
-        _, h_batch_t = model(vel_batch_t)
-        h_batch = h_batch_t.detach().numpy()
+        _, h_batch = model.run_np(vel_batch)
 
         # Combine all trials from batch
         pos_batch = np.reshape(pos_batch, [-1, 2])
@@ -125,13 +148,13 @@ def plot_ratemaps(activations, n_plots, cmap='jet', smooth=True, width=16):
 def _compute_ratemaps_old(model:PathRNN, tgen:TrajectoryGenerator, batch_size=200, n_batches=10, res=20, idxs=None):
 
     # Check boundary shape and set boundary dimensions
-    if tgen.params.boundary_shape != 'square':
+    if tgen.boundary_shape != 'square':
         raise ValueError('Only square boundaries supported')
-    b_width = tgen.params.boundary_height
-    b_height = tgen.params.boundary_height
+    b_width = tgen.boundary_height
+    b_height = tgen.boundary_height
 
     # Number of hidden units
-    h_size = model.hparams.n_units
+    h_size = model.n_units
 
     # Set indices
     if not np.any(idxs):
@@ -139,7 +162,7 @@ def _compute_ratemaps_old(model:PathRNN, tgen:TrajectoryGenerator, batch_size=20
     idxs = idxs[:h_size]
 
     # Number of total points in each batch
-    n_pts = batch_size * tgen.params.n_steps
+    n_pts = batch_size * tgen.n_steps
 
     # Hidden unit values
     h = np.zeros([n_batches, n_pts, h_size])

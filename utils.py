@@ -2,7 +2,6 @@
 
 import subprocess
 
-import yaml
 import torch
 
 from model import PathRNN
@@ -31,5 +30,3 @@ def compute_mse(model: PathRNN, tgen: TrajectoryGenerator, test_batch_size: int)
     # Compute MSE
     mse_loss = torch.nn.MSELoss()
     return mse_loss(pos, pos_est).item()
-
-

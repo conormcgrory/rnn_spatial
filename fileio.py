@@ -20,7 +20,7 @@ def save_params(out_dir: str, params: dict):
     with open(fpath, 'w') as f:
         json.dump(params, f, indent=4)
 
-def load_params(out_dir: str):
+def load_params(out_dir: str) -> dict:
     """Load parameters rom JSON file in run directory."""
 
     fpath = os.path.join(out_dir, PARAMS_FNAME)
@@ -33,7 +33,7 @@ def save_checkpoint(out_dir: str, model: PathRNN, epoch: int):
     fpath = os.path.join(out_dir, CHECKPOINT_FNAME_FMT.format(epoch))
     torch.save(model.state_dict(), fpath)
 
-def load_checkpoint(out_dir: str, epoch: int):
+def load_checkpoint(out_dir: str, epoch: int) -> PathRNN:
     """Load model saved as checkpoint for epoch."""
 
     # Load parameters for run
@@ -48,6 +48,8 @@ def load_checkpoint(out_dir: str, epoch: int):
     model.load_state_dict(state_dict)
     model.eval()
 
+    return model
+
 def save_runinfo(out_dir: str, git_commit: str, ts_start: str, ts_end: str, mse_vals: list):
     """Save run info to JSON file in output directory."""
 
@@ -61,3 +63,11 @@ def save_runinfo(out_dir: str, git_commit: str, ts_start: str, ts_end: str, mse_
     fpath = os.path.join(out_dir, RUNINFO_FNAME)
     with open(fpath, 'w') as f:
        json.dump(info_dict, f, indent=4)
+
+def load_run(out_dir: str) -> tuple[dict, PathRNN]:
+    """Load parameters and final checkpoint model from directory."""
+
+    params = load_params(out_dir)
+    model = load_checkpoint(out_dir, params['num_epochs'])
+
+    return params, model

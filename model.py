@@ -1,18 +1,8 @@
 """RNN for path integration"""
 
-from inspect import Parameter
-
 import numpy as np
 import torch
-#import dataclasses
 
-
-#@dataclasses.dataclass
-#class ModelHyperParams:
-#
-#    n_units: int = 100
-#    rnn_bias: bool = True
-#    output_bias: bool = False
 
 class PathRNN(torch.nn.Module):
     
@@ -63,4 +53,19 @@ class PathRNN(torch.nn.Module):
         # Apply output weights to get estimated position
         pos_est = self.output(u_vals)
         
+        return pos_est, u_vals
+    
+    def run_np(self, vel: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """Convenience method for running model on batch stored in NumPy array"""
+
+        # Convert velocity array to Tensor in order to run model
+        vel_t = torch.Tensor(vel)
+
+        # Predict estimated position
+        pos_est_t, u_vals_t = self(vel_t)
+
+        # Convert estimated position back to Numpy array
+        pos_est = pos_est_t.detach().numpy()
+        u_vals = u_vals_t.detach().numpy()
+
         return pos_est, u_vals

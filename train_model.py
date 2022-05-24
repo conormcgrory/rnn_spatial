@@ -6,7 +6,7 @@ from datetime import datetime
 from trajectory import TrajectoryGenerator
 from model import PathRNN
 from trainer import Trainer
-from params import parse_args, print_params
+from parameters import parse_args, print_params
 from fileio import save_params, save_checkpoint, save_runinfo
 from utils import get_git_commit, compute_mse
 
@@ -38,7 +38,7 @@ def main():
     mse_vals = []
     ts_start = datetime.now().isoformat()
     print('training network...')
-    for epoch in range(params['num_epochs']):
+    for epoch in range(1, params['num_epochs'] + 1):
 
         # Train network
         trainer.train(params['num_batches'])
