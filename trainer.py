@@ -18,6 +18,12 @@ class TrainingLoss(torch.nn.Module):
         self.lambda_w = lambda_w
         self.lambda_h = lambda_h
 
+        # TODO: Remove this eventually
+        self._loss_mse = 0
+        self._loss_w = 0
+        self._loss_h = 0
+        self._loss_total = 0
+
     def forward(self, pos, h, pos_est, w_ih, w_out):
 
         # Mean squared error component of loss
@@ -32,7 +38,15 @@ class TrainingLoss(torch.nn.Module):
         loss_h = torch.mean(torch.square(h))
 
         # Total loss 
-        return loss_mse + self.lambda_w * loss_w + self.lambda_h * loss_h
+        loss_total = loss_mse + self.lambda_w * loss_w + self.lambda_h * loss_h
+
+        # Save loss values
+        self._loss_mse = loss_mse.item()
+        self._loss_w = loss_w.item()
+        self._loss_h = loss_h.item()
+        self._loss_total = loss_total.item()
+
+        return loss_total
 
 
 class Trainer:
@@ -64,6 +78,12 @@ class Trainer:
             lr=self.learning_rate,
         )
 
+        # Loss values
+        self.loss_mse = []
+        self.loss_w = []
+        self.loss_h = []
+        self.loss_total = []
+
 
     def step(self):
         """Present one batch to model and update parameters"""
@@ -83,6 +103,12 @@ class Trainer:
         w_ih = self.model.rnn.weight_ih_l0.data
         w_out = self.model.output.weight.data
         loss = self._loss_criterion(pos, h, pos_est, w_ih, w_out)
+
+        # Add loss values to running lists
+        self.loss_mse.append(self._loss_criterion._loss_mse)
+        self.loss_w.append(self._loss_criterion._loss_w)
+        self.loss_h.append(self._loss_criterion._loss_h)
+        self.loss_total.append(self._loss_criterion._loss_total)
  
         # Compute gradient with respect to loss via backprop
         loss.backward()

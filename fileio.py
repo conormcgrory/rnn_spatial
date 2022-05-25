@@ -50,19 +50,12 @@ def load_checkpoint(out_dir: str, epoch: int) -> PathRNN:
 
     return model
 
-def save_runinfo(out_dir: str, git_commit: str, ts_start: str, ts_end: str, mse_vals: list):
+def save_runinfo(out_dir: str, runinfo: dict):
     """Save run info to JSON file in output directory."""
-
-    info_dict = {
-        'commit': git_commit,
-        'mse_vals': mse_vals,
-        'time_started': ts_start,
-        'time_finished': ts_end
-    }
 
     fpath = os.path.join(out_dir, RUNINFO_FNAME)
     with open(fpath, 'w') as f:
-       json.dump(info_dict, f, indent=4)
+       json.dump(runinfo, f, indent=4)
 
 def load_run(out_dir: str) -> tuple[dict, PathRNN]:
     """Load parameters and final checkpoint model from directory."""

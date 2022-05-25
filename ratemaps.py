@@ -15,29 +15,21 @@ from model import PathRNN
 from trajectory import TrajectoryGenerator
 
 
-def compute_ratemaps(model:PathRNN, tgen:TrajectoryGenerator, n_trials=5000, res=20):
+def compute_ratemaps(model:PathRNN, vel: np.ndarray, pos: np.ndarray, res=20):
     """Compute ratemaps for given model."""
 
-    # Number of hidden units
-    h_size = model.n_units
-
-    # Number of total points in each batch
-    n_pts = n_trials * tgen.n_steps
-
-    # Sample test batch
-    vel, pos = tgen.smp_batch(n_trials)
-        
     # Run model on test batch and save hidden unit values
     _, h  = model.run_np(vel)
 
     # Combine all trials
-    pos = np.reshape(pos, (-1, 2))
-    h = np.reshape(h, (-1, h_size))
+    pos_all = np.reshape(pos, (-1, 2))
+    h_all = np.reshape(h, (-1, model.n_units))
 
     # Compute activation estimates
-    activations = binned_statistic_2d(pos[:, 0], pos[:, 1], h.T, statistic='mean', bins=res)[0]
+    activations = binned_statistic_2d(
+        pos_all[:, 0], pos_all[:, 1], h_all.T, statistic='mean', bins=res)[0]
 
-    return activations, pos, h
+    return activations, h
 
 
 # TODO: Simplify this by only using one batch

@@ -57,8 +57,17 @@ def main():
     print('done.')
 
     print('saving run info...')
-    git_commit = get_git_commit()
-    save_runinfo(output_dir, git_commit, ts_start, ts_end, mse_vals)
+    runinfo = {
+        'commit': get_git_commit(),
+        'mse_vals': mse_vals,
+        'time_started': ts_start,
+        'time_finished': ts_end,
+        'loss_mse': trainer.loss_mse,
+        'loss_w': trainer.loss_w,
+        'loss_h': trainer.loss_h,
+        'loss_total': trainer.loss_total,
+    }
+    save_runinfo(output_dir, runinfo)
     print('done.')
 
 
