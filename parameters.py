@@ -92,7 +92,7 @@ def parse_args() -> tuple[str, dict]:
         help='Number of batches per epoch'
     )
     param_group.add_argument(
-        '--test_batch_size', type=int, 
+        '--test-batch-size', type=int, 
         default=TEST_BATCH_SIZE, 
         help='Size of batch used to compute test error'
     )
