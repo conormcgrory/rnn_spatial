@@ -1,16 +1,7 @@
 import abc
-import os
-import json
-import dataclasses
 
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-# Names of files storing parameters, velocity, and position data in output directory
-SIM_PARAMS_FNAME = 'params.json'
-SIM_VEL_FNAME = 'vel.npy'
-SIM_POS_FNAME = 'pos.npy'
 
 
 class Boundary(abc.ABC):
@@ -60,53 +51,45 @@ def get_boundary(shape: str, height: float) -> Boundary:
         raise ValueError(f'Shape "{shape}" not supported.')
 
 
-@dataclasses.dataclass
-class TrajectoryParams:
-
-    rng_seed: int = 999
-    n_steps: int = 450
-    boundary_shape: str = 'square'
-    boundary_height: float = 2.0
-    time_step: float = 0.1
-    std_norm: float = 0.5
-    mean_speed: float = 0.2
-    coordinates: str = 'cartesian'
-
 class TrajectoryGenerator:
 
-    def __init__(self, params: TrajectoryParams):
+    def __init__(self, rng_seed=999, n_steps=450, boundary_shape='square', 
+        boundary_height=2.0, time_step=0.1, std_norm=0.5, mean_speed=0.2, 
+        coordinates='cartesian'):
 
         # Save parameters
-        self.params = params
-
-        # Copy parameters to reduce clutter
-        self.n_steps = params.n_steps
-        self.time_step = params.time_step
-        self.coordinates = params.coordinates
+        self.rng_seed = rng_seed
+        self.n_steps = n_steps
+        self.boundary_shape = boundary_shape
+        self.boundary_height = boundary_height
+        self.time_step = time_step
+        self.std_norm = std_norm
+        self.mean_speed = mean_speed
+        self.coordinates = coordinates
 
         # Boundary for spatial environment
-        self.boundary = get_boundary(params.boundary_shape, params.boundary_height)
+        self._boundary = get_boundary(boundary_shape, boundary_height)
            
         # Compute Brownian motion stddev from time step and normalized stddev
-        self.std_brownian = np.sqrt(params.time_step) * params.std_norm
+        self._std_brownian = np.sqrt(time_step) * std_norm
 
         # Mean speed of animal is used to compute scale of Rayleigh distribution
-        self.scl_speed = params.mean_speed * np.sqrt(2 / np.pi)
+        self._scl_speed = mean_speed * np.sqrt(2 / np.pi)
 
         # Initialize random generator using seed
-        self.rng = np.random.default_rng(params.rng_seed)
+        self._rng = np.random.default_rng(rng_seed)
 
     def _smp_speed(self):
-        return self.rng.rayleigh(self.scl_speed)
+        return self._rng.rayleigh(self._scl_speed)
 
     def _smp_init_direction(self):
-        return self.rng.random() * 2 * np.pi
+        return self._rng.random() * 2 * np.pi
 
     def _smp_direction_step(self):
-        return self.std_brownian * self.rng.standard_normal()
+        return self._std_brownian * self._rng.standard_normal()
 
     def _smp_direction_collision(self):
-        return self.rng.random() * 2 * np.pi
+        return self._rng.random() * 2 * np.pi
 
     def _smp_trial(self):
 
@@ -133,10 +116,10 @@ class TrajectoryGenerator:
         pos_y[0] = self.time_step * vel_y[0]
 
         # Check boundary condition
-        if not self.boundary.contains(pos_x[0], pos_y[0]):
+        if not self._boundary.contains(pos_x[0], pos_y[0]):
             raise ValueError('First step is outside boundary')
 
-        for t in range(1, self.params.n_steps):
+        for t in range(1, self.n_steps):
 
             # Update velocity
             speed[t] = self._smp_speed()
@@ -149,7 +132,7 @@ class TrajectoryGenerator:
             pos_y[t] = pos_y[t - 1] + self.time_step * vel_y[t]
  
             # If animal collides with wall, sample angle from uniform distribution
-            while not self.boundary.contains(pos_x[t], pos_y[t]):
+            while not self._boundary.contains(pos_x[t], pos_y[t]):
 
                 # Resample direction
                 theta[t] = self._smp_direction_collision()
