@@ -37,9 +37,14 @@ class PathRNN(torch.nn.Module):
         # Initialize output weights
         torch.nn.init.zeros_(self.output.weight.data)
 
+        # CUDA
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.to(self.device)
+
+
     def init_hidden(self, batch_size):
 
-        return torch.zeros(1, batch_size, self.n_units)
+        return torch.zeros(1, batch_size, self.n_units).to(self.device)
     
     def forward(self, vel):
 

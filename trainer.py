@@ -84,14 +84,17 @@ class Trainer:
         self.loss_h = []
         self.loss_total = []
 
+        # CUDA
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
     def step(self):
         """Present one batch to model and update parameters"""
 
         # Sample batch from trajectory generator
         vel_np, pos_np = self.traj_gen.smp_batch(self.batch_size)
-        vel = torch.Tensor(vel_np)
-        pos = torch.Tensor(pos_np)
+        vel = torch.Tensor(vel_np).to(self.device)
+        pos = torch.Tensor(pos_np).to(self.device)
 
         # Clear gradients from previous batch
         self._optimizer.zero_grad()
