@@ -11,8 +11,8 @@ import torch
 import matplotlib.pyplot as plt
 from scipy.stats import binned_statistic_2d
 
-from model import PathRNN
-from trajectory import TrajectoryGenerator
+from spatialnet.model import PathRNN
+from spatialnet.trajectory import TrajectoryGenerator
 
 
 def compute_ratemaps(model:PathRNN, vel: np.ndarray, pos: np.ndarray, res=20):

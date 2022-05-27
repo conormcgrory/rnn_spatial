@@ -4,8 +4,8 @@ import subprocess
 
 import torch
 
-from model import PathRNN
-from trajectory import TrajectoryGenerator
+from spatialnet.model import PathRNN
+from spatialnet.trajectory import TrajectoryGenerator
 
 
 def get_git_commit():

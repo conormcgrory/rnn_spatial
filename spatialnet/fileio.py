@@ -5,7 +5,7 @@ import json
 
 import torch
 
-from model import PathRNN
+from spatialnet.model import PathRNN
 
 
 PARAMS_FNAME = 'params.json'

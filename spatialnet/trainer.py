@@ -4,8 +4,8 @@ import copy
 
 import torch
 
-from trajectory import TrajectoryGenerator
-from model import PathRNN
+from spatialnet.trajectory import TrajectoryGenerator
+from spatialnet.model import PathRNN
 
 
 class TrainingLoss(torch.nn.Module):

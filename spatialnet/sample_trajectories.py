@@ -6,8 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 
-import parameters
-import trajectory
+from spatialnet import parameters
+from spatialnet import trajectory
 
 
 # Output directory
