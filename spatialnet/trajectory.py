@@ -68,7 +68,7 @@ class TrajectoryGenerator:
         self.coordinates = coordinates
 
         # Boundary for spatial environment
-        self._boundary = get_boundary(boundary_shape, boundary_height)
+        self.boundary = get_boundary(boundary_shape, boundary_height)
            
         # Compute Brownian motion stddev from time step and normalized stddev
         self._std_brownian = np.sqrt(time_step) * std_norm
@@ -116,7 +116,7 @@ class TrajectoryGenerator:
         pos_y[0] = self.time_step * vel_y[0]
 
         # Check boundary condition
-        if not self._boundary.contains(pos_x[0], pos_y[0]):
+        if not self.boundary.contains(pos_x[0], pos_y[0]):
             raise ValueError('First step is outside boundary')
 
         for t in range(1, self.n_steps):
@@ -132,7 +132,7 @@ class TrajectoryGenerator:
             pos_y[t] = pos_y[t - 1] + self.time_step * vel_y[t]
  
             # If animal collides with wall, sample angle from uniform distribution
-            while not self._boundary.contains(pos_x[t], pos_y[t]):
+            while not self.boundary.contains(pos_x[t], pos_y[t]):
 
                 # Resample direction
                 theta[t] = self._smp_direction_collision()
@@ -166,43 +166,3 @@ class TrajectoryGenerator:
             vel[k], pos[k] = self._smp_trial()
 
         return vel, pos
-
-
-def plot_position(boundary, pos, ax=None):
-
-    if ax is None:
-        ax = plt.gca()
-
-    # Plot boundary
-    boundary.plot(ax)
-
-    # Add origin point to beginning of position sequence
-    pos_x = np.concatenate(([0.0], pos[:, 0]))
-    pos_y = np.concatenate(([0.0], pos[:, 1]))
-
-    # Plot position values
-    ax.plot(pos_x, pos_y)
-
-    ax.set_aspect('equal')
-
-
-def plot_position_estimate(boundary, pos_true, pos_est, ax=None):
-
-    if ax is None:
-        ax = plt.gca()
-
-    # Plot boundary
-    boundary.plot(ax)
-
-    # Add origin point to beginning of position sequences
-    x_true = np.concatenate(([0.0], pos_true[:, 0]))
-    y_true = np.concatenate(([0.0], pos_true[:, 1]))
-    x_est = np.concatenate(([0.0], pos_est[:, 0]))
-    y_est = np.concatenate(([0.0], pos_est[:, 1]))
-
-    # Plot position sequences
-    ax.plot(x_true, y_true, color='black', label='true')
-    ax.plot(x_est, y_est, color='red', label='est')
-
-    ax.set_aspect('equal')
-    ax.legend()

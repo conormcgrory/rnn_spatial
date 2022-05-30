@@ -8,8 +8,9 @@ from spatialnet import parameters
 from spatialnet.trajectory import TrajectoryGenerator
 from spatialnet.model import PathRNN
 from spatialnet.trainer import Trainer
+from spatialnet.metrics import compute_mse
 from spatialnet.fileio import save_params, save_checkpoint, save_runinfo
-from spatialnet.utils import get_git_commit, compute_mse
+from spatialnet.utils import get_git_commit
 
 
 def parse_args() -> tuple[str, dict]:
